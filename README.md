@@ -36,8 +36,8 @@ Build a web application that scrapes various websites for data related to the Mi
 
 * HTML
 * CSS
-* Bootstrap
-* Javascript
+* BeautifulSoup
+* MongoDB
 * Python
 * Pandas
 * Jupyter Notebook
