@@ -98,5 +98,5 @@ def mars_scrape():
     # Close Browser
     browser.quit()
 
-    # Return Combined Dataset
+    # Return Mars Dictionary
     return mars_data
