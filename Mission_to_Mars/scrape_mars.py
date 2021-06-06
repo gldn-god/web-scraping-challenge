@@ -18,13 +18,13 @@ def init_browser():
 # Scrape Mars Data
 def mars_scrape():
     browser = init_browser()
-    
+
     # MongoDB Setup
     mars_data = {}
-    conn = 'mongodb://localhost:27017'
-    client = pymongo.MongoClient(conn)
+    client = pymongo.MongoClient('mongodb://localhost:27017')
     db = client.mars_db
     collection = db.articles
+
 
     # Scrape Most Recent News Headline
     browser.visit('https://mars.nasa.gov/news/')
@@ -36,6 +36,11 @@ def mars_scrape():
     news_title = article_result.find('div', class_ = 'content_title').text.strip()
     news_p = article_result.find('div', class_ = 'article_teaser_body').text.strip()
 
+    mars_data['news_date'] = news_date
+    mars_data['news_title'] = news_title
+    mars_data['news_p'] = news_p
+
+
     # Scrape Featured Web Image
     browser.visit('https://data-class-jpl-space.s3.amazonaws.com/JPL_Space/index.html')
     browser.links.find_by_partial_text('FULL IMAGE').click()
@@ -45,6 +50,9 @@ def mars_scrape():
     image_result = image_soup.find(class_ = 'fancybox-image')['src']
     featured_image_url = 'https://data-class-jpl-space.s3.amazonaws.com/JPL_Space/' + image_result
 
+    mars_data['featured_img'] = featured_image_url
+
+
     # Scrape Mars Facts
     browser.visit('https://space-facts.com/mars/')
     fact_soup = soup(browser.html, 'html.parser')
@@ -52,6 +60,9 @@ def mars_scrape():
 
     fact_df = pd.read_html('https://space-facts.com/mars/')[0]
     fact_html = fact_df.to_html(index = False, header = False)
+
+    mars_data['fact_table'] = fact_html
+
 
     # Scrape Hemispheres Images & URLs
     browser.visit('https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars')
@@ -82,5 +93,10 @@ def mars_scrape():
         time.sleep(1)
         browser.back()
     
+    mars_data['hemisphere_imgs'] = hemisphere_image_urls
+
     # Close Browser
     browser.quit()
+
+    # Return Combined Dataset
+    return mars_data
