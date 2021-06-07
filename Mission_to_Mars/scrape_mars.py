@@ -16,7 +16,7 @@ def init_browser():
     )
 
 # Scrape Mars Data
-def mars_scrape():
+def scrape():
     browser = init_browser()
 
     # MongoDB Setup
