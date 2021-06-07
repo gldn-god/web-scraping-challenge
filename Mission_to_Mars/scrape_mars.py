@@ -20,7 +20,6 @@ def mars_scrape():
     browser = init_browser()
 
     # MongoDB Setup
-    mars_data = {}
     client = pymongo.MongoClient('mongodb://localhost:27017')
     db = client.mars_db
     collection = db.articles
@@ -28,78 +27,75 @@ def mars_scrape():
 
     # Scrape Most Recent News Headline
     browser.visit('https://mars.nasa.gov/news/')
+    time.sleep(3)
     article_soup = soup(browser.html, 'html.parser')
-    time.sleep(5)
 
     article_result = article_soup.find('article')
     news_date = article_result.find('div', class_ = 'list_date').text.strip()
     news_title = article_result.find('div', class_ = 'content_title').text.strip()
     news_p = article_result.find('div', class_ = 'article_teaser_body').text.strip()
 
-    mars_data['news_date'] = news_date
-    mars_data['news_title'] = news_title
-    mars_data['news_p'] = news_p
+    recent_news = {
+    'date' : news_date,
+    'title' : news_title,
+    'teaser' : news_p
+    }
 
 
     # Scrape Featured Web Image
     browser.visit('https://data-class-jpl-space.s3.amazonaws.com/JPL_Space/index.html')
+    time.sleep(3)
     browser.links.find_by_partial_text('FULL IMAGE').click()
-    image_soup = soup(browser.html, 'html.parser')
-    time.sleep(5)
+    time.sleep(3)
 
+    image_soup = soup(browser.html, 'html.parser')
     image_result = image_soup.find(class_ = 'fancybox-image')['src']
     featured_image_url = 'https://data-class-jpl-space.s3.amazonaws.com/JPL_Space/' + image_result
 
-    mars_data['featured_img'] = featured_image_url
+    featured_image = {
+        'featured_image_url' : featured_image_url
+    }
 
 
     # Scrape Mars Facts
     browser.visit('https://space-facts.com/mars/')
-    fact_soup = soup(browser.html, 'html.parser')
-    time.sleep(5)
+    time.sleep(3)
 
+    fact_soup = soup(browser.html, 'html.parser')
     fact_df = pd.read_html('https://space-facts.com/mars/')[0]
     fact_html = fact_df.to_html(index = False, header = False)
 
-    mars_data['fact_table'] = fact_html
+    facts = {
+        'html_table' : fact_html
+    }
 
 
     # Scrape Hemispheres Images & URLs
     browser.visit('https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars')
+    time.sleep(3)
+
     hemi_soup = soup(browser.html, 'html.parser')
-    time.sleep(5)
-
     hemisphere_content = hemi_soup.find_all('div', class_ = 'item')
-
-    hemisphere_images = []
+    hemispheres = {}
 
     for hemisphere in hemisphere_content:
-        hemi_url = {}
-    
-        title = hemisphere.find('div', class_='description').h3.text
-        hemi_url['title'] = title
-        time.sleep(1)
-
-        browser.find_by_text(title).click()
+        hemi_name = hemisphere.find('div', class_='description').h3.text
+        browser.find_by_text(hemi_name).click()
+        time.sleep(3)
         hemi_soup = soup(browser.html, 'html.parser')
-    
         download = hemi_soup.find('div', class_ = "downloads")
         src = download.find('a')
         if src.text == 'Sample':
-            img_url = src['href']
-            hemi_url['img_url'] = img_url
-    
-        hemisphere_images.append(hemi_url)
-        time.sleep(1)
+            hemi_url = src['href']
+        hemispheres[hemi_name] = hemi_url
         browser.back()
-    
-    mars_data['hemisphere_imgs'] = hemisphere_image_urls
+        time.sleep(1)
+
 
     # Close Browser
     browser.quit()
 
-    # Import to MongoDB
-    collection.insert_many(mars_data)
 
-    # Return Mars Dictionary
-    return mars_data
+    # Import to MongoDB
+    collection.delete_many({})
+    collection.insert_many([recent_news, featured_image, facts, hemispheres])
