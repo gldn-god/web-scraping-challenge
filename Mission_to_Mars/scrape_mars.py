@@ -105,5 +105,22 @@ def hemispheres(browser):
             print(e)
     return hemisphere_image_urls
 
+
+def scrape_hemisphere(html_text):
+    hemi_soup = BeautifulSoup(html_text, "html.parser")
+
+    try:
+        title = hemi_soup.find("h2", class_="title").get_text()
+        sample = hemi_soup.find("a", text="Sample").get("href")
+    except:
+        title = None
+        sample = None
+
+    hemisphere_dict = {
+        "title": title,
+        "img_url": sample
+    }
+    return hemisphere_dict
+
 if __name__ == "__main__":
     print(mars_scrape())
