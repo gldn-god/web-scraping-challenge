@@ -98,5 +98,8 @@ def mars_scrape():
     # Close Browser
     browser.quit()
 
+    # Import to MongoDB
+    collection.insert_many(mars_data)
+
     # Return Mars Dictionary
     return mars_data
